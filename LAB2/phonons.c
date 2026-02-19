@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
             printf("%f \n", q_end[i]);
         }
     }
-    else if(argc = 9)
+    else if(argc == 9)
     {
         double q_N = 11;
         //NU FINNS DENNA I BÅDA: INTE BRA.
@@ -208,14 +208,8 @@ int main(int argc, char *argv[])
     {
         q_N = 1;
         q_end = NULL;
-
     }
 
-    else
-    {
-        fprintf(stderr, "Wrong format of input");
-        return 1;
-    }
 
 
 
