@@ -1,0 +1,59 @@
+%% import
+clear all
+close all
+freq_spec_1 = readtable("FNM\output_fft\fft_freq_spec_1.txt");
+freq_spec_1 = table2array(freq_spec_1);
+
+freq_spec_2 = readtable("FNM\output_fft\fft_freq_spec_2.txt")
+freq_spec_2 = table2array(freq_spec_2);
+
+freq_spec_3 = readtable("FNM\output_fft\fft_freq_spec_3.txt")
+freq_spec_3 = table2array(freq_spec_3);
+
+
+
+%% Parameters
+N = length(freq_spec_1);
+delta = 1/N;
+
+n_arr = -N/2:1:N/2-1;
+f_arr = n_arr/(N*delta);
+f_c1 = 8;
+f_m = 4;
+f_c2 = 16;
+
+
+%% Plot
+close all
+tiledlayout(1,2,"TileSpacing","compact")
+nexttile(1)
+plot(f_arr, freq_spec_1, Color='b')
+hold on
+plot(f_arr, freq_spec_2, LineStyle="-.", Color='r')
+box on 
+grid on
+xlim([0 16])
+set(gca, "FontSize", 16)
+xline(f_c1 - f_m, '--r', 'f_c - f_m', 'LabelHorizontalAlignment','left', FontSize=14, Color='black');
+xline(f_c1 + f_m, '--r', 'f_c + f_m', 'LabelHorizontalAlignment','left', FontSize=14, Color='black');
+xline(f_c1, '--r', 'f_c', 'LabelHorizontalAlignment','left', FontSize=14, Color='black');
+xticks([4 8 12 16])
+legend('u_{\alpha}(t)', 'u_{\beta}(t)', FontSize = 14, Orientation='vertical', Location='east')
+title("a)", FontSize=24);
+xlabel('Frequency')
+
+nexttile(2)
+plot(f_arr, freq_spec_3)
+xlim([8 24])
+set(gca, "FontSize", 16)
+xline(f_c2 - f_m, '--r', '2f_c - f_m', 'LabelHorizontalAlignment','left', FontSize=14, Color='black');
+xline(f_c2 + f_m, '--r', '2f_c + f_m', 'LabelHorizontalAlignment','left', FontSize=14, Color='black');
+xline(f_c2, '--r', '2f_c', 'LabelHorizontalAlignment','left', FontSize=14, Color='black');
+xticks([12 16 20 24])
+xlabel('Frequency')
+
+box on
+grid on
+title("b)", FontSize=24)
+set(gcf,'PaperPositionMode','auto');        % preserves figure size
+print(gcf,'C:\Dokument\4an\FNM\plots_fft\fft_AM','-depsc2')

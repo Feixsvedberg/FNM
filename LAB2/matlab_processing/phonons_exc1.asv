@@ -1,0 +1,17 @@
+frequencies_100 = table2array(readtable("FNM\LAB2\output_phonons\frequencies100.txt"));
+c_100 = table2array(readtable("FNM\LAB2\output_phonons\c100.txt"));
+
+%branch indices
+b1_index = 1:3:length(frequencies_100);
+b2_index = 2:3:length(frequencies_100);
+b3_index = 3:3:length(frequencies_100);
+
+freq_b1_100 = frequencies(b1_index);
+freq_b2_100 = frequencies(b2_index);
+freq_b3_100 = frequencies(b3_index);
+
+close all
+plot(c,freq_b1)
+hold on
+plot(c, freq_b2)
+plot(c, freq_b3)

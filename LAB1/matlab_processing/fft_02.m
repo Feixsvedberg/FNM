@@ -1,0 +1,44 @@
+close all
+fft_AM_data = readtable("FNM\output_fft\fft_AM_data.txt");
+fft_AM_data = table2array(fft_AM_data);
+fft_AM_data2 = readtable("FNM\output_fft\fft_AM_data_2.txt");
+fft_AM_data2 = table2array(fft_AM_data2);
+N = length(fft_AM_data)/2;
+
+delta = 1/N;
+%Matlab 1 to N in index grrr
+N_array = 1:1:N*2;
+
+%Hämta rätt element (varannat).
+real_index = mod(N_array(:),2) ~= 0;
+complex_index = real_index == 0;
+
+real_part = delta*fft_AM_data(real_index);
+real_part2 = delta*fft_AM_data2(real_index); 
+
+complex_part = delta*fft_AM_data(complex_index);
+complex_part2 = delta*fft_AM_data2(complex_index);
+%dela upp listan av frekvenser för att matcha gsl output layout
+
+n_arr = -N/2:1:N/2-1;
+
+f_arr = n_arr/(N*delta);
+
+
+transf_mag = sqrt(real_part.^2+complex_part.^2);
+transf_mag2 = sqrt(real_part2.^2+complex_part2.^2);
+
+f_spectrum = transf_mag.^2;
+f_spectrum2 = transf_mag2.^2
+
+plot(f_arr,f_spectrum);
+hold on
+xline(8)
+xline(4)
+xline(12)
+xlim([2 14])
+plot(f_arr,f_spectrum2)
+
+
+
+

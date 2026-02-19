@@ -1,0 +1,14 @@
+close all
+fft_real = readtable("FNM\output_fft\fft_gauss_real.txt");
+fft_real = table2array(fft_real);
+fft_complex = readtable("FNM\output_fft\fft_gauss_complex.txt");
+fft_complex = table2array(fft_complex);
+
+fft_exact = readtable("FNM\output_fft\fft_exact_trans.txt");
+fft_exact = table2array(fft_exact);
+
+N = length(fft_real)/2;
+
+n_arr = -N/2:1:N/2-1;
+
+f_arr = -n/(N*delta);
