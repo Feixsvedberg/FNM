@@ -208,12 +208,11 @@ int main(int argc, char *argv[])
     }
     else if(argc == 9)
     {
-        double q_N = 11;
+        q_N = 11;
         //NU FINNS DENNA I BÅDA: INTE BRA.
         for (int i = 0; i < dim; i++)
         {
             q_end[i] = atof(argv[6+i]);
-            printf("%f \n", q_end[i]);
         }
     }
     // Case where noting more than q_start is inputted.
