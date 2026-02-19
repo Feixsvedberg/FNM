@@ -96,7 +96,7 @@ void print_to_file(double* array, int len, const char *filename)
         fprintf(fp, "%.15e\n", array[i]);
     }
     fclose(fp);
-    printf("data exported to %s\n", filename);
+    //printf("data exported to %s\n", filename);
 }
 
 //Prints the ouput for omega. KANSKE ÄNDRA SÅ DEN TAR ARGV SOM INPUT OCG DÄRIFRÅN BESTÄMMER VAD SOM PRINTAS
