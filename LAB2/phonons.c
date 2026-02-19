@@ -99,41 +99,54 @@ void print_to_file(double* array, int len, const char *filename)
     printf("data exported to %s\n", filename);
 }
 
+//Prints the ouput for omega. KANSKE ÄNDRA SÅ DEN TAR ARGV SOM INPUT OCG DÄRIFRÅN BESTÄMMER VAD SOM PRINTAS
+void print_output_omega(double *q, double *omega)
+{
+    fprintf(stdout, "%f %f %f %9e %9e %9e \n", q[0], q[1], q[2], omega[0], omega[1], omega[2]);
+}
 
 void calc_freqs(double *q_start, double *q_end, double q_N, double *freq_mat, double *c_vector, Material mat)
 {
     double x_length; double y_length; double z_length;
+    double *q = calloc(dim, sizeof(double));
+    double *omega = calloc(dim, sizeof(double));
+    double *eps = NULL;
+    double A = get_A(mat);
+    double B = get_B(mat);
     if(q_end != NULL)
     {
         x_length = q_end[0] - q_start[0];
         y_length = q_end[1] - q_start[1];
         z_length = q_end[2] - q_start[2];
+        for(int i = 0; i < q_N; i++)
+        {
+            q[0] = q_start[0] + x_length/(q_N-1)*i;
+            q[1] = q_start[1] + y_length/(q_N-1)*i;
+            q[2] = q_start[2] + z_length/(q_N-1)*i;
+            frequencies(A, B, mat.m, q, omega, eps);
+            //möjligen lägga till ett test för att undersöka vad som ska printas
+            print_output_omega(q, omega);
+
+            freq_mat[dim*i] = omega[0];
+            freq_mat[dim*i+1] = omega[1];
+            freq_mat[dim*i+2] = omega[2];
+            c_vector[i] = sqrt(gsl_pow_2(q[0]-q_start[0])+gsl_pow_2(q[1]-q_start[1])+gsl_pow_2(q[2]-q_start[2]));
+        }
     }
     //Handle case where q_end is not given
     else
     {
-        x_length = 0; 
-        y_length = 0; 
-        z_length = 0;
+        q[0] = q_start[0];
+        q[1] = q_start[1];
+        q[2] = q_start[2];
+        frequencies(A, B, mat.m, q, omega, eps);
+        print_output_omega(q, omega);
     }
-    double A = get_A(mat);
-    double B = get_B(mat);
+
     //Below works if it is okay to change the contents every iteration
 
-    double *q = calloc(dim, sizeof(double));
-    double *omega = calloc(dim, sizeof(double));
-    double *eps = NULL;
-    for(int i = 0; i < q_N; i++)
-    {
-        q[0] = q_start[0] + x_length/(q_N-1)*i;
-        q[1] = q_start[1] + y_length/(q_N-1)*i;
-        q[2] = q_start[2] + z_length/(q_N-1)*i;
-        frequencies(A, B, mat.m, q, omega, eps);
-        freq_mat[dim*i] = omega[0];
-        freq_mat[dim*i+1] = omega[1];
-        freq_mat[dim*i+2] = omega[2];
-        c_vector[i] = sqrt(gsl_pow_2(q[0]-q_start[0])+gsl_pow_2(q[1]-q_start[1])+gsl_pow_2(q[2]-q_start[2]));
-    }
+
+
 }
 
 
