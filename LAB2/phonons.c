@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Wrong number of arguments. Please provide either 6, 9 or 10 arguments\n");
         return 1;
     }
-    fprintf(stdout, "Valid number of arguments \n");
+    //fprintf(stdout, "Valid number of arguments \n");
 
 
 
