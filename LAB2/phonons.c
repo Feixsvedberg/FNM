@@ -148,6 +148,8 @@ int main(int argc, char *argv[])
     fprintf(stdout, "Valid number of arguments \n");
 
 
+
+
     //ADD CHECK TO SEE IF RIGHT NUMBER OF INPUT ARGUMENTS
 
     //Create material
@@ -175,7 +177,14 @@ int main(int argc, char *argv[])
     //Check if end point values for q are inputted
     if(argc == 10)
     {
-        q_N =  atof(argv[9]);
+        q_N = atof(argv[9]);
+        //Check if valid number of N is inputted.
+        if(q_N<=0)
+        {
+            fprintf(stderr, "Invalid number of points entered. Exiting \n");
+            return 1;
+        }
+
         printf("%f \n", q_N);
         
         for (int i = 0; i < dim; i++)
