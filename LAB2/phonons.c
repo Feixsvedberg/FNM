@@ -140,18 +140,13 @@ void calc_freqs(double *q_start, double *q_end, double q_N, double *freq_mat, do
 int main(int argc, char *argv[])
 {
     //Initial format checks 
-    if(argc < 6)
+    if(argc != 6 && argc != 9 && argc != 10)
     {
-        fprintf(stderr, "Too few argument. Please provide at least : program substance quantity qx1 qx2 qx3\n");
+        fprintf(stderr, "Wrong number of arguments. Please provide either 6, 9 or 10 arguments\n");
         return 1;
     }
-    fprintf(stdout, "Enough argument thanks :) \n");
+    fprintf(stdout, "Valid number of arguments \n");
 
-    if(argc > 10)
-    {
-        fprintf(stderr, "To many arguments :( \n)");
-        return 1;
-    }
 
     //ADD CHECK TO SEE IF RIGHT NUMBER OF INPUT ARGUMENTS
 
