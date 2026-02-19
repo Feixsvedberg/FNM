@@ -198,7 +198,6 @@ int main(int argc, char *argv[])
             return 1;
         }
 
-        printf("%f \n", q_N);
         
         for (int i = 0; i < dim; i++)
         {
@@ -220,9 +219,6 @@ int main(int argc, char *argv[])
         q_N = 1;
         q_end = NULL;
     }
-
-
-
 
 
     if(strcmp(argv[2], "omega")==0)
