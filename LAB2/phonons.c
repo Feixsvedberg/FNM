@@ -203,7 +203,6 @@ int main(int argc, char *argv[])
         for (int i = 0; i < dim; i++)
         {
             q_end[i] = atof(argv[6+i]);
-            printf("%f \n", q_end[i]);
         }
     }
     else if(argc == 9)
