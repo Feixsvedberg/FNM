@@ -185,6 +185,7 @@ int main(int argc, char *argv[])
     else if(status == 1 && argc != 4 && argc !=5 && argc != 6)
     {
         fprintf(stderr, "Wrong number of arguments. Please proivde either 4,5 or 6 arguments for cv.");
+        return 1;
     }
     //fprintf(stdout, "Valid number of arguments \n");
     //ADD CHECK TO SEE IF RIGHT NUMBER OF INPUT ARGUMENTS
