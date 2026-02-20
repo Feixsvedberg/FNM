@@ -156,16 +156,35 @@ void calc_freqs(double *q_all, double *freqs, Material mat, double q_N)
     }
 }
 
-
-
+//Calculate summand in eq 18 which is dulong petits law
+double dulong_petit(double T, double freq)
+{
+    double hbar = GSL_CONST_MKSA_PLANCKS_CONSTANT_HBAR;
+    double k_B = GSL_CONST_MKSA_BOLTZMANN;
+    double val;
+    val = k_B*gsl_pow_2(hbar*freq/(k_B*T))*exp(hbar*freq/(k_B*T))/(gsl_pow_2(exp(hbar*freq/(k_B*T))-1));
+    return val;
+}
 
 int main(int argc, char *argv[])
 {
-    //Initial format checks 
-    if(argc != 6 && argc != 9 && argc != 10)
+
+    //Variable status keeps track of if we want to run a program with gamma/omega or cv. It is then
+    //used to switch between conditions for the format
+    int status = 0;
+    if(strcmp(argv[2],"cv")==0)
     {
-        fprintf(stderr, "Wrong number of arguments. Please provide either 6, 9 or 10 arguments\n");
+        status = 1;
+    }
+    //Initial format checks 
+    if(status == 0 && argc != 6 && argc != 9 && argc != 10)
+    {
+        fprintf(stderr, "Wrong number of arguments. Please provide either 4, 5, 6, 9 or 10 arguments for omega/gamma evaluation\n");
         return 1;
+    }
+    else if(status == 1 && argc != 4 && argc !=5 && argc != 6)
+    {
+        fprintf(stderr, "Wrong number of arguments. Please proivde either 4,5 or 6 arguments for cv.");
     }
     //fprintf(stdout, "Valid number of arguments \n");
     //ADD CHECK TO SEE IF RIGHT NUMBER OF INPUT ARGUMENTS
@@ -183,96 +202,193 @@ int main(int argc, char *argv[])
     //Get parameters corresponding to input material
     set_material_parameters(&mat);
 
-    //allocate vector holding starting point
-    double *q_start = calloc(dim, sizeof(double));
-    double q_N;
-    double *q_end = calloc(dim, sizeof(double));
-
-    for(int i = 0; i<dim; i++)
+    //check if gamma/omega.
+    if (status == 0)
     {
-        q_start[i] = atof(argv[3+i]);
-    }
+        //allocate vector holding starting point
+        double *q_start = calloc(dim, sizeof(double));
+        double q_N;
+        double *q_end = calloc(dim, sizeof(double));
 
-    //Check if end point values for q are inputted
-    if(argc == 10)
-    {
-        q_N = atof(argv[9]);
-        //Check if valid number of N is inputted.
-        if(q_N<=0)
+        for(int i = 0; i<dim; i++)
         {
-            fprintf(stderr, "Invalid number of points entered. Exiting \n");
+            q_start[i] = atof(argv[3+i]);
+        }
+
+        //Check if end point values for q are inputted
+        if(argc == 10)
+        {
+            q_N = atof(argv[9]);
+            //Check if valid number of N is inputted.
+            if(q_N<=0)
+            {
+                fprintf(stderr, "Invalid number of points entered. Exiting \n");
+                return 1;
+            }
+
+            
+            for (int i = 0; i < dim; i++)
+            {
+                q_end[i] = atof(argv[6+i]);
+            }
+        }
+        else if(argc == 9)
+        {
+            q_N = 11;
+            //NU FINNS DENNA I BÅDA: INTE BRA.
+            for (int i = 0; i < dim; i++)
+            {
+                q_end[i] = atof(argv[6+i]);
+            }
+        }
+        // Case where noting more than q_start is inputted.
+        else if(argc == 6)
+        {
+            q_N = 1;
+            q_end = NULL;
+        }
+
+        double *q_all = calloc(dim*q_N, sizeof(double));
+        double *c_vector = calloc(q_N, sizeof(double));
+
+        get_q_all(q_start, q_end, q_all, c_vector, q_N);
+
+        if(strcmp(argv[2], "omega")==0)
+        {
+            //vector to store frequencies in
+            double *freqs = calloc(q_N*dim, sizeof(double));
+            calc_freqs(q_all, freqs, mat, q_N);
+
+            print_output(q_all, freqs, q_N);
+            
+            print_to_file(freqs, q_N*dim, "output_phonons/frequencies100.txt");
+            print_to_file(c_vector, q_N, "output_phonons/c100.txt"); 
+        }
+
+        else if(strcmp(argv[2], "gamma")==0)
+        {
+            double delta = mat.r/1e5;
+            //create compressed and expanded material
+            Material mat_exp;
+            Material mat_comp;
+            mat_exp.name = argv[1];
+            mat_comp.name = argv[1];
+            set_material_parameters(&mat_exp);
+            set_material_parameters(&mat_comp);
+
+            //change their nearest neighbor distance r
+            mat_exp.r = mat.r + delta;
+            mat_comp.r = mat.r - delta;
+
+            double *freqs_exp = calloc(q_N*dim, sizeof(double));
+            double *freqs_comp = calloc(q_N*dim, sizeof(double));
+            //vector to keep all values of q;
+            calc_freqs(q_all, freqs_exp, mat_exp, q_N);
+            calc_freqs(q_all, freqs_comp, mat_comp, q_N);
+
+            double *grunesien = calloc(q_N*dim, sizeof(double));
+
+            //Calculate grunesien for all branches of q
+            for(int i = 0; i < q_N*dim; i++)
+            {
+                //printf("Freq exp: %f Freq comp: %f", freqs_exp[i], freqs_comp[i]);
+                grunesien[i] = -(log(freqs_exp[i])-log(freqs_comp[i]))/(3*(log(mat_exp.r)-log(mat_comp.r)));
+            }
+            print_output(q_all, grunesien, q_N);
+        }
+    }
+    //Enters this statement if we are running program for cv
+    else
+    {
+        int T_N;
+        double T_end;
+        double T_start = atof(argv[3]);
+
+        if (argc == 6)
+        {
+            T_N = atoi(argv[5]);
+            T_end = atof(argv[4]);
+        }
+        else if(argc == 5)
+        {
+            T_N = 11;
+            T_end = atof(argv[4]);
+        }
+        else
+        {
+            T_N = 1;
+            T_end = T_start;
+        }
+
+        //qvekt is a file of 48 rows and 4 columns¨
+        int rows = 48;
+        int cols = 4;
+        FILE *fp = fopen("qvekt", "r");
+        if (!fp)
+        {
+            fprintf(stderr, "failed to open qvekt");
             return 1;
         }
+        double *qvekt_data = calloc(rows*cols, sizeof(double));
 
-        
-        for (int i = 0; i < dim; i++)
+        for(int i = 0; i < rows*cols; i++)
         {
-            q_end[i] = atof(argv[6+i]);
+            if(fscanf(fp, "%lf", &qvekt_data[i])!=1)
+            {
+                fprintf(stderr, "error reading a certain element from file");
+                return 1;
+            }
         }
-    }
-    else if(argc == 9)
-    {
-        q_N = 11;
-        //NU FINNS DENNA I BÅDA: INTE BRA.
-        for (int i = 0; i < dim; i++)
+        fclose(fp);
+        double *q_all = calloc(rows*dim, sizeof(double));
+        double *weights = calloc(rows, sizeof(double));
+
+        //put the read data into two separate vectors
+        for(int i = 0; i<rows; i++)
         {
-            q_end[i] = atof(argv[6+i]);
+            q_all[i*dim] = qvekt_data[i*dim];
+            q_all[i*dim+1] = qvekt_data[i*dim+1];
+            q_all[i*dim+2] = qvekt_data[i*dim+2];
+            weights[i] = qvekt_data[i*dim+3];
         }
-    }
-    // Case where noting more than q_start is inputted.
-    else if(argc == 6)
-    {
-        q_N = 1;
-        q_end = NULL;
-    }
 
-    double *q_all = calloc(dim*q_N, sizeof(double));
-    double *c_vector = calloc(q_N, sizeof(double));
 
-    get_q_all(q_start, q_end, q_all, c_vector, q_N);
+        double *freqs = calloc(dim*rows, sizeof(double));
+        //calc freqs but with rows as input for q_N since we are calculating for that many qs.
+        calc_freqs(q_all, freqs, mat, rows);
 
-    if(strcmp(argv[2], "omega")==0)
-    {
-        //vector to store frequencies in
-        double *freqs = calloc(q_N*dim, sizeof(double));
-        calc_freqs(q_all, freqs, mat, q_N);
+        double qv_factor = 1.0/8.0*(4.0/1000.0)*gsl_pow_3(1.0/mat.r);
 
-        print_output(q_all, freqs, q_N);
-        
-        print_to_file(freqs, q_N*dim, "output_phonons/frequencies100.txt");
-        print_to_file(c_vector, q_N, "output_phonons/c100.txt"); 
-    }
-
-    else if(strcmp(argv[2], "gamma")==0)
-    {
-        double delta = mat.r/1e5;
-        //create compressed and expanded material
-        Material mat_exp;
-        Material mat_comp;
-        mat_exp.name = argv[1];
-        mat_comp.name = argv[1];
-        set_material_parameters(&mat_exp);
-        set_material_parameters(&mat_comp);
-
-        //change their nearest neighbor distance r
-        mat_exp.r = mat.r + delta;
-        mat_comp.r = mat.r - delta;
-
-        double *freqs_exp = calloc(q_N*dim, sizeof(double));
-        double *freqs_comp = calloc(q_N*dim, sizeof(double));
-        //vector to keep all values of q;
-        calc_freqs(q_all, freqs_exp, mat_exp, q_N);
-        calc_freqs(q_all, freqs_comp, mat_comp, q_N);
-
-        double *grunesien = calloc(q_N*dim, sizeof(double));
-
-        //Calculate grunesien for all branches of q
-        for(int i = 0; i < q_N*dim; i++)
+        double T;
+        double sum;
+        double part_sum;
+        double cv_over_V;
+        //interval divisor
+        for(int i = 0; i<T_N; i++)
         {
-            //printf("Freq exp: %f Freq comp: %f", freqs_exp[i], freqs_comp[i]);
-            grunesien[i] = -(log(freqs_exp[i])-log(freqs_comp[i]))/(3*(log(mat_exp.r)-log(mat_comp.r)));
+            T = T_start + (T_end-T_start)/(T_N-1)*i;
+            if (T_N == 1)
+            {
+                T = T_start;
+            }
+            sum = 0;
+            //q-sum
+            for (int q = 0; q<rows; q++)
+            {
+                part_sum = 0;
+                //j-sum
+                for(int j = 0; j<dim; j++)
+                {
+                    part_sum = part_sum + dulong_petit(T, freqs[3*q+j]);
+                }
+                sum += weights[q]*part_sum;
+            }
+            cv_over_V = qv_factor*sum;
+            fprintf(stdout, "%f %15e \n", T, cv_over_V);
         }
-        print_output(q_all, grunesien, q_N);
+    
     }
+
     return 0;
+    
 }
