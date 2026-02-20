@@ -256,6 +256,11 @@ int main(int argc, char *argv[])
 
         if(strcmp(argv[2], "omega")==0)
         {
+            if(q_start[0] == 0 && q_start[1] == 0 && q_start[2] == 0)
+            {
+                fprintf(stderr, "q = (0,0,0) not defined for gamma");
+                return 1;
+            }
             //vector to store frequencies in
             double *freqs = calloc(q_N*dim, sizeof(double));
             calc_freqs(q_all, freqs, mat, q_N);
