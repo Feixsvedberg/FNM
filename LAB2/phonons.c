@@ -346,10 +346,10 @@ int main(int argc, char *argv[])
         //put the read data into two separate vectors
         for(int i = 0; i<rows; i++)
         {
-            q_all[i*dim] = qvekt_data[i*dim];
-            q_all[i*dim+1] = qvekt_data[i*dim+1];
-            q_all[i*dim+2] = qvekt_data[i*dim+2];
-            weights[i] = qvekt_data[i*dim+3];
+            q_all[i*dim] = qvekt_data[i*cols];
+            q_all[i*dim+1] = qvekt_data[i*cols+1];
+            q_all[i*dim+2] = qvekt_data[i*cols+2];
+            weights[i] = qvekt_data[i*cols+3];
         }
 
 
