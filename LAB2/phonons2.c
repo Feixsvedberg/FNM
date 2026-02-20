@@ -113,9 +113,6 @@ void print_output(double *q, double *quant, double q_N)
 //Function to get a long vector conataining all qs that are evaluated and also fills a c_vector
 void get_q_all(double *q_start, double *q_end, double *q_all, double *c_vector, double q_N)
 {
-    double x_length;
-    double y_length;
-    double z_length;
     if(q_end != NULL)
     {
         x_length = q_end[0] - q_start[0];
@@ -227,12 +224,10 @@ int main(int argc, char *argv[])
     }
 
     double *q_all = calloc(dim*q_N, sizeof(double));
-    double *c_vector = calloc(q_N, sizeof(double));
-
-    get_q_all(q_start, q_end, q_all, c_vector, q_N);
 
     if(strcmp(argv[2], "omega")==0)
     {
+        double *c_vector = calloc(q_N, sizeof(double));
         //vector to store frequencies in
         double *freqs = calloc(q_N*dim, sizeof(double));
         calc_freqs(q_all, freqs, mat, q_N);
@@ -243,14 +238,12 @@ int main(int argc, char *argv[])
         print_to_file(c_vector, q_N, "output_phonons/c100.txt"); 
     }
 
-    else if(strcmp(argv[2], "gamma")==0)
+    else if(strcmp(argv[2], "gamma"))
     {
         double delta = mat.r/1e3;
         //create compressed and expanded material
         Material mat_exp;
         Material mat_comp;
-        mat_exp.name = argv[1];
-        mat_comp.name = argv[1];
         set_material_parameters(&mat_exp);
         set_material_parameters(&mat_comp);
 
@@ -259,20 +252,24 @@ int main(int argc, char *argv[])
         mat_comp.r = mat.r - delta;
 
         double *freqs_exp = calloc(q_N*dim, sizeof(double));
+        double *c_vector_exp = calloc(q_N, sizeof(double));
         double *freqs_comp = calloc(q_N*dim, sizeof(double));
+        double *c_vector_comp = calloc(q_N, sizeof(double));
         //vector to keep all values of q;
         calc_freqs(q_all, freqs_exp, mat_exp, q_N);
-        calc_freqs(q_all, freqs_comp, mat_comp, q_N);
+        calc_freqs(q_all, freqs_comp, mat_exp, q_N);
 
         double *grunesien = calloc(q_N*dim, sizeof(double));
 
         //Calculate grunesien for all branches of q
         for(int i = 0; i < q_N*dim; i++)
         {
-            //printf("Freq exp: %f Freq comp: %f", freqs_exp[i], freqs_comp[i]);
             grunesien[i] = -(log(freqs_exp[i])-log(freqs_comp[i]))/(3*(log(mat_exp.r)-log(mat_comp.r)));
         }
+
         print_output(q_all, grunesien, q_N);
+
     }
     return 0;
+
 }
