@@ -308,17 +308,22 @@ int main(int argc, char *argv[])
         {
             T_N = atoi(argv[5]);
             T_end = atof(argv[4]);
+            if (T_N <= 0)
+            {
+                fprintf(stderr, "T_N <= 0, not valid");
+            }
         }
         else if(argc == 5)
         {
             T_N = 11;
             T_end = atof(argv[4]);
         }
-        else
+        else if(argc == 4)
         {
             T_N = 1;
             T_end = T_start;
         }
+    
 
         //qvekt is a file of 48 rows and 4 columns¨
         int rows = 48;
@@ -357,7 +362,8 @@ int main(int argc, char *argv[])
         //calc freqs but with rows as input for q_N since we are calculating for that many qs.
         calc_freqs(q_all, freqs, mat, rows);
 
-        double qv_factor = 1.0/8.0*(4.0/1000.0)*gsl_pow_3(1.0/mat.r);
+        double a = M_SQRT2*mat.r;
+        double qv_factor = 1.0/8.0*(4.0/1000.0)*gsl_pow_3(1.0/a);
 
         double T;
         double sum;
