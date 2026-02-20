@@ -362,7 +362,7 @@ int main(int argc, char *argv[])
         //calc freqs but with rows as input for q_N since we are calculating for that many qs.
         calc_freqs(q_all, freqs, mat, rows);
 
-        double a = M_SQRT2*mat.r;
+        double a = M_SQRT1_2*mat.r;
         double qv_factor = 1.0/8.0*(4.0/1000.0)*gsl_pow_3(1.0/a);
 
         double T;
