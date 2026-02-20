@@ -318,6 +318,7 @@ int main(int argc, char *argv[])
             if (T_N <= 0)
             {
                 fprintf(stderr, "T_N <= 0, not valid");
+                return 1;
             }
         }
         else if(argc == 5)
