@@ -245,7 +245,7 @@ int main(int argc, char *argv[])
 
     else if(strcmp(argv[2], "gamma")==0)
     {
-        double delta = mat.r/1e3;
+        double delta = mat.r/1e5;
         //create compressed and expanded material
         Material mat_exp;
         Material mat_comp;
