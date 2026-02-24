@@ -1,0 +1,50 @@
+clear all
+close all
+grunesien_100 = table2array(readtable("FNM\LAB2\output_phonons\grunesien100.txt"));
+c_2_100 = table2array(readtable("FNM\LAB2\output_phonons\c_2_100.txt"));
+
+b1_index = 1:3:length(grunesien_100);
+b2_index = 2:3:length(grunesien_100);
+b3_index = 3:3:length(grunesien_100);
+
+grun_b1_100 = grunesien_100(b1_index);
+grun_b2_100 = grunesien_100(b2_index);
+grun_b3_100 = grunesien_100(b3_index);
+
+figure(1)
+plot(c_2_100, grun_b1_100)
+hold on
+plot(c_2_100, grun_b2_100)
+plot(c_2_100, grun_b3_100)
+
+%% 110
+
+grunesien_110 = table2array(readtable("FNM\LAB2\output_phonons\grunesien110.txt"));
+c_2_110 = table2array(readtable("FNM\LAB2\output_phonons\c_2_110.txt"));
+
+
+grun_b1_110 = grunesien_110(b1_index);
+grun_b2_110 = grunesien_110(b2_index);
+grun_b3_110 = grunesien_110(b3_index);
+
+figure(2)
+plot(c_2_110, grun_b1_110)
+hold on
+plot(c_2_110, grun_b2_110)
+plot(c_2_110, grun_b3_110)
+
+
+%% 111
+
+grunesien_111 = table2array(readtable("FNM\LAB2\output_phonons\grunesien111.txt"));
+c_2_111 = table2array(readtable("FNM\LAB2\output_phonons\c_2_111.txt"));
+
+grun_b1_111 = grunesien_111(b1_index);
+grun_b2_111 = grunesien_111(b2_index);
+grun_b3_111 = grunesien_111(b3_index);
+
+figure(3)
+plot(c_2_111, grun_b1_111)
+hold on
+plot(c_2_111, grun_b2_111)
+plot(c_2_111, grun_b3_111)

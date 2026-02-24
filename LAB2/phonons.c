@@ -7,7 +7,7 @@
 #define dim 3
 
 
-//FIX HEADER LATER
+//Declare function frequencies
 void frequencies(double A, double B, double m, double *q, double *omega, double *eps);
 
 typedef struct 
@@ -87,6 +87,7 @@ void print_to_file(double* array, int len, const char *filename)
 {
     //open file for writing
     FILE *fp = fopen(filename, "w");
+    //Check if opening file was succesful
     if (!fp) {
         perror("failed to open file");
         return;
@@ -97,7 +98,7 @@ void print_to_file(double* array, int len, const char *filename)
         fprintf(fp, "%.15e\n", array[i]);
     }
     fclose(fp);
-    //printf("data exported to %s\n", filename);
+    printf("data exported to %s\n", filename);
 }
 
 //Prints the ouput for omega or gamma.
@@ -113,9 +114,7 @@ void print_output(double *q, double *quant, double q_N)
 //Function to get a long vector conataining all qs that are evaluated and also fills a c_vector
 void get_q_all(double *q_start, double *q_end, double *q_all, double *c_vector, double q_N)
 {
-    double x_length;
-    double y_length;
-    double z_length;
+    double x_length, y_length, z_length;
     if(q_end != NULL)
     {
         x_length = q_end[0] - q_start[0];
@@ -142,7 +141,7 @@ void calc_freqs(double *q_all, double *freqs, Material mat, double q_N)
     double q_temp[3];
     double A = get_A(mat);
     double B = get_B(mat);
-    double *omega = calloc(dim, sizeof(double));
+    double omega[dim];
     double *eps = NULL;
     for(int i = 0; i<q_N; i++)
     {
@@ -187,28 +186,22 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Wrong number of arguments. Please proivde either 4,5 or 6 arguments for cv.");
         return 1;
     }
-    //fprintf(stdout, "Valid number of arguments \n");
-    //ADD CHECK TO SEE IF RIGHT NUMBER OF INPUT ARGUMENTS
 
     //Create material
     Material mat; 
     mat.name = argv[1];
     mat.quant = argv[2];
 
-
-    //ADD CHECK TO SEE INPUT ARGUMENTS: ALSO CREATE FUNCTION TO GET FREQ FOR DIFFERENT Qs
-
-    //Get q-vector from input (case where only one point is specied)
-
     //Get parameters corresponding to input material
     set_material_parameters(&mat);
 
     //check if gamma/omega.
-    if (status == 0)
+    if (strcmp(argv[2],"omega")==0 || strcmp(argv[2], "gamma")==0)
     {
-        //allocate vector holding starting point
-        double *q_start = calloc(dim, sizeof(double));
-        double q_N;
+        //Declare starting vector q_start and number of points to evaluate at q_N
+        double q_start[dim];
+        int q_N;
+        //Declare q_end as a pointer since it might be set to a NULL-pointer later on
         double *q_end = calloc(dim, sizeof(double));
 
         for(int i = 0; i<dim; i++)
@@ -249,24 +242,28 @@ int main(int argc, char *argv[])
             q_end = NULL;
         }
 
-        double *q_all = calloc(dim*q_N, sizeof(double));
-        double *c_vector = calloc(q_N, sizeof(double));
+        double q_all[dim*q_N];
+        double c_vector[q_N];
 
         get_q_all(q_start, q_end, q_all, c_vector, q_N);
+        free(q_end);
+        
 
+        //Omega calculations
         if(strcmp(argv[2], "omega")==0)
         {
             
             //vector to store frequencies in
-            double *freqs = calloc(q_N*dim, sizeof(double));
+            double freqs[q_N*dim];
             calc_freqs(q_all, freqs, mat, q_N);
 
             print_output(q_all, freqs, q_N);
             
-            print_to_file(freqs, q_N*dim, "output_phonons/frequencies100.txt");
-            print_to_file(c_vector, q_N, "output_phonons/c100.txt"); 
+            //print_to_file(freqs, q_N*dim, "output_phonons/frequencies110.txt");
+            //print_to_file(c_vector, q_N, "output_phonons/c110.txt"); 
         }
 
+        //Gamma calculations
         else if(strcmp(argv[2], "gamma")==0)
         {
             if(q_start[0] == 0 && q_start[1] == 0 && q_start[2] == 0)
@@ -274,6 +271,8 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "q = (0,0,0) not defined for gamma");
                 return 1;
             }
+            //Variable to represent a small change in nearest neighbor distance in order to
+            //evaluate the numerical derivative. 
             double delta = mat.r/1e5;
             //create compressed and expanded material
             Material mat_exp;
@@ -287,13 +286,13 @@ int main(int argc, char *argv[])
             mat_exp.r = mat.r + delta;
             mat_comp.r = mat.r - delta;
 
-            double *freqs_exp = calloc(q_N*dim, sizeof(double));
-            double *freqs_comp = calloc(q_N*dim, sizeof(double));
+            double freqs_exp[q_N*dim];
+            double freqs_comp[q_N*dim];
             //vector to keep all values of q;
             calc_freqs(q_all, freqs_exp, mat_exp, q_N);
             calc_freqs(q_all, freqs_comp, mat_comp, q_N);
 
-            double *grunesien = calloc(q_N*dim, sizeof(double));
+            double grunesien[q_N*dim];
 
             //Calculate grunesien for all branches of q
             for(int i = 0; i < q_N*dim; i++)
@@ -302,10 +301,12 @@ int main(int argc, char *argv[])
                 grunesien[i] = -(log(freqs_exp[i])-log(freqs_comp[i]))/(3*(log(mat_exp.r)-log(mat_comp.r)));
             }
             print_output(q_all, grunesien, q_N);
+            //print_to_file(grunesien, q_N*dim, "output_phonons/grunesien111.txt");
+            //print_to_file(c_vector, q_N, "output_phonons/c_2_111.txt");
         }
     }
     //Enters this statement if we are running program for cv
-    else
+    else if (strcmp(argv[2],"cv")==0)
     {
         int T_N;
         double T_end;
@@ -333,7 +334,7 @@ int main(int argc, char *argv[])
         }
     
 
-        //qvekt is a file of 48 rows and 4 columns¨
+        //qvekt is a file of 48 rows and 4 columns
         int rows = 48;
         int cols = 4;
         FILE *fp = fopen("qvekt", "r");
@@ -342,7 +343,9 @@ int main(int argc, char *argv[])
             fprintf(stderr, "failed to open qvekt");
             return 1;
         }
-        double *qvekt_data = calloc(rows*cols, sizeof(double));
+
+        //Create array to save the contents of the file in
+        double qvekt_data[rows*cols]; 
 
         for(int i = 0; i < rows*cols; i++)
         {
@@ -353,8 +356,11 @@ int main(int argc, char *argv[])
             }
         }
         fclose(fp);
-        double *q_all = calloc(rows*dim, sizeof(double));
-        double *weights = calloc(rows, sizeof(double));
+
+        //Array to keep the q-vectors in
+        double q_all[rows*dim]; 
+        //Array to the keep corresponding weights in
+        double weights[rows]; 
 
         //put the read data into two separate vectors
         for(int i = 0; i<rows; i++)
@@ -366,41 +372,47 @@ int main(int argc, char *argv[])
         }
 
 
-        double *freqs = calloc(dim*rows, sizeof(double));
+        double freqs[dim*rows];
         //calc freqs but with rows as input for q_N since we are calculating for that many qs.
         calc_freqs(q_all, freqs, mat, rows);
 
         double a = M_SQRT1_2*mat.r;
         double qv_factor = 1.0/8.0*(4.0/1000.0)*gsl_pow_3(1.0/a);
 
-        double T;
-        double sum;
-        double part_sum;
-        double cv_over_V;
-        //interval divisor
+        double sum, part_sum;
+        double T[T_N];
+        double cv_over_V[T_N];
+
         for(int i = 0; i<T_N; i++)
         {
-            T = T_start + (T_end-T_start)/(T_N-1)*i;
+            T[i] = T_start + (T_end-T_start)/(T_N-1)*i;
+            
+            //above expression fails for T_N = 1
             if (T_N == 1)
             {
-                T = T_start;
+                T[i] = T_start;
             }
             sum = 0;
-            //q-sum
+            //q-sum in eq...
             for (int q = 0; q<rows; q++)
             {
                 part_sum = 0;
-                //j-sum
+                //j-sum in eq...
                 for(int j = 0; j<dim; j++)
                 {
-                    part_sum = part_sum + dulong_petit(T, freqs[3*q+j]);
+                    part_sum = part_sum + dulong_petit(T[i], freqs[3*q+j]);
                 }
                 sum += weights[q]*part_sum;
             }
-            cv_over_V = qv_factor*sum;
-            fprintf(stdout, "%f %15e \n", T, cv_over_V);
+            cv_over_V[i] = qv_factor*sum;
+            fprintf(stdout, "%f %15e \n", T[i], cv_over_V[i]);
         }
-    
+        print_to_file(T, T_N, "output_phonons/T_Ne.txt");
+        print_to_file(cv_over_V, T_N, "output_phonons/cv_Ne.txt");
+    }
+    else
+    {
+        fprintf(stderr, "No valid program-type entered. Please enter: gamma, omega or cv");
     }
 
     return 0;

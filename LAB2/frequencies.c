@@ -6,19 +6,6 @@
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_eigen.h>
 
-void print_dyn_matrix(gsl_matrix *D, int dim)
-{
-         //what is in matrix DEBUG
-    for(int i = 0; i<dim; i++)
-    {
-        for(int j = 0; j<dim; j++)
-        {
-            double element = gsl_matrix_get(D,i,j);
-            printf("%15e", element);
-        }
-        printf("\n");
-    }
-}
 
 double get_diag_value(double A, double B, double m, double *q, int i)
 {
@@ -57,9 +44,7 @@ void frequencies(double A, double B, double m, double *q, double *omega, double 
         }
     }
 
-    //print_dyn_matrix(D, dim);
-
-    //Obtain eigenvalues, i.e frequencies. 
+    //Obtain eigenvalues, i.e frequencies squared. 
     gsl_eigen_symmv_workspace *work = gsl_eigen_symmv_alloc(dim);
     gsl_vector *eval = gsl_vector_alloc (dim);
     gsl_matrix *evec = gsl_matrix_alloc(dim, dim);
@@ -68,7 +53,6 @@ void frequencies(double A, double B, double m, double *q, double *omega, double 
     //sort vectors
     gsl_eigen_symmv_sort(eval, evec, GSL_EIGEN_SORT_VAL_ASC);
 
-    //print_dyn_matrix(evec, dim);
 
     for(int i = 0; i<dim; i++)
     {
@@ -90,11 +74,9 @@ void frequencies(double A, double B, double m, double *q, double *omega, double 
             }
         }
     }
+    gsl_eigen_symmv_free(work);
+    gsl_vector_free(eval);
+    gsl_matrix_free(evec);
+    gsl_matrix_free(D);
 
-    for(int i = 0; i<dim; i++)
-    {
-        //double eigenval = gsl_vector_get(eval,i);
-        //printf("Eigen: %15e \n", eigenval);
-        //printf("Freq: %15e \n", sqrt(eigenval));
-    }  
 }
