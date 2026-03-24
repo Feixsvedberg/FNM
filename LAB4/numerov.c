@@ -1,22 +1,16 @@
 #include "numerov.h"
 
 
-//calculating E_n from n 
-double calc_E(Parameters *p)
-{
-    double E = (p->n + 1.0/2.0)*p->hbar*p->omega;
-    return E;
-}
 
-//translation
+
+//translation from psi to Y
 double psi_to_Y(double psi, double f, double h)
 {
-    
     double Y = psi + gsl_pow_2(h)/12*f*psi;
     return Y;
 
 }
-//translation
+//translation from Y to psi
 double Y_to_psi(double Y, double f, double h)
 {
     double psi = Y/(1+gsl_pow_2(h)/12*f);
@@ -24,9 +18,9 @@ double Y_to_psi(double Y, double f, double h)
 }
 
 //Numerovs method that takes direction as input and changes how it iterates
-//
 void numerov_method(double *Y, int N, double h, double *f, double Y0, double Y1, const char *direction)
 {
+    //From left
     if (strcmp(direction, "fromleft")==0)
     {
         Y[0] = Y0;
@@ -38,6 +32,7 @@ void numerov_method(double *Y, int N, double h, double *f, double Y0, double Y1,
             Y[i+1] = Y[i]*(2-(gsl_pow_2(h)*f[i])/(1+(gsl_pow_2(h)/12)*f[i]))-Y[i-1];
         }
     }
+    //From right
     else if (strcmp(direction, "fromright")==0)
     {
         Y[N-1] = Y0;
@@ -55,16 +50,7 @@ void numerov_method(double *Y, int N, double h, double *f, double Y0, double Y1,
   
 }
 
-void split_f(double *f, double *f_left, double *f_right, int N_half)
-{
-    for(int i = 0; i < N_half; i++)
-    {
-        f_left[i] = f[i];
-        f_right[i] = f[N_half+i];
-    }
-
-}
-
+//Function that normalizes a wave function psi
 void normalize(double *psi, Parameters *p)
 {
     double sum = 0;
@@ -84,7 +70,7 @@ void normalize(double *psi, Parameters *p)
     }
 }
 
-
+//Function that prints array of length len onto file with filename
 void print_to_file(double* array, int len, const char *filename)
 {
     //open file for writing

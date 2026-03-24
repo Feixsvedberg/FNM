@@ -8,7 +8,7 @@ LDLIBS = -L/usr/local/lib -lgsl -lgslcblas -lm
 
 COMMON_OBJS = numerov.o
 
-TARGETS = harm_osc morse morse_rework
+TARGETS = harm_osc morse 
 
 all: $(TARGETS)
 
@@ -16,9 +16,6 @@ harm_osc: harm_osc.o $(COMMON_OBJS)
 	$(LD) $^ $(LDLIBS) -o $@
 
 morse: morse.o $(COMMON_OBJS)
-	$(LD) $^ $(LDLIBS) -o $@
-	
-morse_rework: morse_rework.o $(COMMON_OBJS)
 	$(LD) $^ $(LDLIBS) -o $@
 
 %.o: %.c numerov.h

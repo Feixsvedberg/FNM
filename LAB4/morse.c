@@ -40,16 +40,17 @@ void print_V_morse_to_file(Parameters *p)
     print_to_file(V_morse, p->N, "output_numerov/V_morse.txt");
 }
 
-//Function f to be evaluated by the multiroot finder.
+//Function to be evaluated by the multiroot finder.
 int discrepancy (const gsl_vector *E, void *params, gsl_vector *F)
 {
+    //Cast parameters to pointer p
     Parameters *p = (Parameters *)params;
     //Update the energy guess
     p->E_n = gsl_vector_get(E,0);
 
     int N = p->N;
     double h = p->h;
-    //Matching point (does not correspond to an index, just decides where we split the grid)
+    //Matching point 
     int xM = p->xM;
     double f[N];
     double R[N];
@@ -85,15 +86,10 @@ int discrepancy (const gsl_vector *E, void *params, gsl_vector *F)
     numerov_method(Y_left, N_left, h, f_left, Y0, Y1_left, "fromleft");
     numerov_method(Y_right, N_right, h, f_right, Y0, Y1, "fromright");
 
-    //create vectors containing the psi's needed to calculate discrepancy
+    //create vectors containing psi for both direction
     double psi_left[N_left];
     double psi_right[N_right];
 
-    //for(int i = 0; i < 3; i++)
-    //{
-    //    psi_left[i] = Y_to_psi(Y_left[xM-2+1], f_left[xM-2+i],p->h);
-    //    psi_right[i] = Y_to_psi(Y_right[xM-2+i], f_right[xM-2+i], p->h);
-    //}
 
     //Translate the iteration variables back into psi and store them in vectors
     //corresponding to the two directions
@@ -105,10 +101,8 @@ int discrepancy (const gsl_vector *E, void *params, gsl_vector *F)
     {
         psi_right[i] = Y_to_psi(Y_right[i], f_right[i],p->h);
     }
-    printf("Psi right (denom in scale) %.15e \n", psi_right[1]);
-    printf("Psi left %.15e \n", psi_left[N_left-2]);
 
-    //find scale to rescale right solutions to fins match from both direction at xM
+    //find scale to rescale right solutions to find match from both direction at xM
     double scale = psi_left[xM]/psi_right[1];
     //rescale right solutions
     for(int i = 0; i<N_right; i++)
@@ -121,16 +115,13 @@ int discrepancy (const gsl_vector *E, void *params, gsl_vector *F)
     double disc = gsl_pow_2(psi_left[xM-1] - psi_right[0]) + gsl_pow_2(psi_left[xM+1] - psi_right[2]);
     gsl_vector_set(F, 0, disc);
 
-    //debug prints
-    printf("Disc: %.15e \n", gsl_vector_get(F,0));
-    printf("Energy : %.15e \n", gsl_vector_get(E,0));
 
     if(disc < tol)
     {
     // Left part 
     for(int i = 0; i < N_left; i++) 
         {
-            p->psi[i] = psi_left[i] / R[i];
+            p->psi[i] = p->angular_const*psi_left[i] / R[i];
         }
 
     // right part 
@@ -138,17 +129,18 @@ int discrepancy (const gsl_vector *E, void *params, gsl_vector *F)
     for(int i = xM+2; i < N; i++) 
     {
         j = i - xM;   
-        p->psi[i] = psi_right[j] / R[i];
+        p->psi[i] = p->angular_const*psi_right[j] / R[i];
     } 
             
 }
     return GSL_SUCCESS;
 }
 
+//Function that calculates the energy, using the modified formula described in report
 double calc_E_morse(Parameters *p, double *E_results)
 {
     double E;
-    if(p->n == 0 || p->n == 1)
+    if(p->n < 2)
     {
         E = (p->n + 0.5)*p->omega*p->hbar;
     }
@@ -161,15 +153,14 @@ double calc_E_morse(Parameters *p, double *E_results)
 
 int main()
 {
+    //Vector to store each eigenenergy result
     double E_results[6];
     for (int n = 0; n < 6; n ++)
     {
 
-        //Parameters (p) for particles in morse potential.
+        //Parameters
         Parameters *p = malloc(sizeof(Parameters));
         p->n = n;
-
-        
         double m_H = 1.67374*1e-27;
         double m_Cl = 5.88715*1e-26;
         double mu = m_H*m_Cl/(m_Cl+m_H);
@@ -179,7 +170,7 @@ int main()
         p->a = 1.812*1e+10;
         p->hbar = GSL_CONST_MKSA_PLANCKS_CONSTANT_HBAR;
         p->omega = sqrt(2*p->E_B*gsl_pow_2(p->a)/p->mu);
-        //change here to get initial guess for energy level
+        p->angular_const = 1/sqrt(4*M_PI);
         p->E_n = calc_E_morse(p, E_results);
 
         //Grid parameters
@@ -195,56 +186,53 @@ int main()
         gsl_multiroot_function f = {&discrepancy, n_dim, p};
 
         const gsl_multiroot_fsolver_type *st = gsl_multiroot_fsolver_dnewton;
+        //Allocate solver
         gsl_multiroot_fsolver *s = gsl_multiroot_fsolver_alloc(st,n_dim);
 
+        //Allocate vector containg the eigenenergy
         gsl_vector *E = gsl_vector_alloc(n_dim);
         gsl_vector_set(E, 0, p->E_n);
 
+        //set solver vectors and functions
         gsl_multiroot_fsolver_set(s, &f, E);
 
         int iter = 0;
         int status;
+        //Iterate the solver until residual is below tolerance
         do
         {
             iter++;
-            fprintf(stdout, "iteration %d\n", iter);
+            //fprintf(stdout, "iteration %d\n", iter);
             status = gsl_multiroot_fsolver_iterate(s);
 
             if(status)
             {
                 break;
             }
-            //Check convergence
+            //Check convergence 
             status = gsl_multiroot_test_residual(s->f, tol);
         }
         while (status == GSL_CONTINUE && iter < 1000);
 
         printf("status = %s \n", gsl_strerror(status));
 
-        //print results
+        //print results if mulitroot scheme was succesful
         if(status== GSL_SUCCESS)
         {
             fprintf(stdout, "Eigenenergy = ");
             gsl_vector_fprintf(stdout, s->x, "%.6e");
             E_results[n] = gsl_vector_get(s->x, 0);
-            normalize(p->psi, p); //does not work here for some reason 
+            normalize(p->psi, p); 
             char psi_filename[100];
             sprintf(psi_filename, "output_numerov/psi_E%d_morse.txt", p->n);
             print_to_file(p->psi, p->N, psi_filename);
+            
         }
-        
-
-
-        //numerov_method(Y_left, N, R0, h, f, Y0, Y1, "fromleft");
-        //numerov_method(Y_right, N, R0, h, f, Y0, Y1, "fromright");
-        //print_to_file(Y_right, N, "output_numerov/Y_right_check.txt");
-        //print_to_file(Y_left, N, "output_numerov/Y_left_check.txt");
-        //print_V_morse_to_file(p);
-
-        
-        
-            //print_to_file(R, p->N, "output_numerov/R_morse.txt");
+        free(p->psi);
+        gsl_vector_free(E);
+        gsl_multiroot_fsolver_free(s);
     
-        }
+    }
+    
     return 0;
 }
